@@ -1,2 +1,2 @@
-# gracekitonyi-bit-daily-reports
-This repository contains my daily reports for the PyPro-SCiDaS course
+# gracekitonyi-daily-reports
+This repository contains my daily reports for the PyPro-SCiDaS course.
