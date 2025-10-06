@@ -1,192 +1,230 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Password Strength Checker — Grace</title>
-  <style>
-    :root{--bg:#0f1724;--card:#0b1220;--accent:#06b6d4;--muted:#94a3b8;--good:#16a34a}
-    html,body{height:100%;margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:linear-gradient(180deg,#071026 0%, #07112a 100%);color:#e6eef6}
-    .container{max-width:880px;margin:36px auto;padding:28px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border-radius:12px;box-shadow:0 8px 30px rgba(2,6,23,.6)}
-    h1{margin:0 0 8px;font-size:22px}
-    p.lead{margin:0 0 18px;color:var(--muted)}
-    .row{display:flex;gap:16px;align-items:flex-start}
-    .col{flex:1}
-    .card{background:rgba(255,255,255,0.02);padding:16px;border-radius:10px}
-    label{display:block;margin-bottom:6px;font-weight:600}
-    input[type="password"], input[type="text"]{width:100%;padding:10px 12px;border-radius:8px;border:1px solid rgba(255,255,255,0.06);background:transparent;color:inherit;font-size:15px}
-    .controls{display:flex;gap:8px;margin-top:8px}
-    button{background:var(--accent);border:none;padding:10px 14px;border-radius:8px;color:#042a2f;font-weight:700;cursor:pointer}
-    button.secondary{background:transparent;color:var(--accent);border:1px solid rgba(6,182,212,.14)}
-    .muted{color:var(--muted);font-size:13px}
-    ul{margin:8px 0 0 18px}
-    .badge{display:inline-block;padding:6px 8px;border-radius:999px;font-weight:700}
-    .strength-weak{background:#dc2626;color:white}
-    .strength-moderate{background:#f59e0b;color:black}
-    .strength-strong{background:var(--good);color:white}
-    .success{color:var(--good);font-weight:700}
-    .issue{background:rgba(220,38,38,0.06);padding:8px;border-radius:8px;margin-bottom:8px}
-    small{color:var(--muted)}
-    footer{margin-top:14px;color:var(--muted);font-size:13px}
-    pre{white-space:pre-wrap;background:rgba(255,255,255,0.02);padding:12px;border-radius:8px}
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Password Strength Checker — Web UI</title>
+<style>
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background-color: #0f172a;
+    color: #e2e8f0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    transition: background 0.8s;
+  }
+  .container {
+    background-color: #1e293b;
+    padding: 30px;
+    border-radius: 20px;
+    width: 420px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.4);
+    animation: fadeIn 1s ease-in-out;
+  }
+  h1 {
+    text-align: center;
+    color: #38bdf8;
+    margin-bottom: 15px;
+  }
+  input[type="password"], input[type="text"] {
+    width: 80%;
+    padding: 10px;
+    border-radius: 10px;
+    border: none;
+    outline: none;
+    font-size: 1em;
+    transition: transform 0.2s;
+  }
+  input:focus {
+    transform: scale(1.02);
+  }
+  button {
+    background-color: #06b6d4;
+    border: none;
+    padding: 10px 15px;
+    color: #fff;
+    font-size: 1em;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background 0.3s, transform 0.2s;
+  }
+  button:hover {
+    background-color: #0891b2;
+    transform: scale(1.05);
+  }
+  .options {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+  }
+  .strength {
+    display: inline-block;
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: bold;
+    color: #fff;
+    margin-top: 10px;
+    transition: background-color 0.6s;
+  }
+  .weak { background-color: #ef4444; }
+  .moderate { background-color: #f59e0b; }
+  .strong { background-color: #10b981; }
+  ul {
+    margin-top: 10px;
+    padding-left: 20px;
+  }
+  li {
+    margin-bottom: 5px;
+    line-height: 1.4;
+  }
+  #qr {
+    margin-top: 20px;
+    text-align: center;
+  }
+  canvas {
+    margin-top: 10px;
+    border-radius: 10px;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+</style>
 </head>
 <body>
   <div class="container">
-    <h1>Password Strength Checker — Web UI</h1>
-    <p class="lead">Type a password to test it against the same rules used in your Python checker. The page will show <strong>all</strong> reasons a password fails and give friendly advice. Only when the password meets every rule will it be labeled <em>Strong</em>.</p>
-
-    <div class="row">
-      <div class="col card">
-        <label for="password">Password</label>
-        <div style="display:flex;gap:8px;align-items:center">
-          <input id="password" type="password" placeholder="Enter password to test" aria-label="Password input">
-          <button id="checkBtn">Check</button>
-        </div>
-        <div class="controls">
-          <label style="display:flex;gap:8px;align-items:center"><input type="checkbox" id="showBox"> <small>Show password</small></label>
-          <button class="secondary" id="generateBtn">Generate example</button>
-        </div>
-
-        <div style="margin-top:14px">
-          <div id="strengthWrap" style="display:flex;align-items:center;gap:10px">
-            <span id="strengthBadge" class="badge strength-weak">Strength</span>
-            <div id="strengthText" class="muted">No password checked yet.</div>
-          </div>
-        </div>
-
-        <div id="messages" style="margin-top:12px"></div>
-      </div>
-
-      <div class="col card">
-        <h3>Why this checker?</h3>
-        <p class="muted">This page mirrors your Python rules: length 8–64, includes uppercase, lowercase, digit, special character; no spaces; not all letters or all numbers; no 3 identical chars in a row; not a common password.</p>
-
-        <h4 style="margin-top:12px">Quick tips</h4>
-        <ul>
-          <li>Use a mix of letters, numbers, and symbols.</li>
-          <li>Avoid repeating a character 3+ times.</li>
-          <li>Don't use common passwords like <code>password</code> or <code>123456</code>.</li>
-        </ul>
-
-        <footer>When a password is valid you'll get a motivational message to celebrate.</footer>
-      </div>
+    <h1>🔐 Password Strength Checker</h1>
+    <div>
+      <input type="password" id="password" placeholder="Enter your password here...">
+      <button onclick="checkPassword()">Check</button>
+    </div>
+    <div class="options">
+      <label><input type="checkbox" id="showPassword"> Show password</label>
+      <button onclick="generateExample()">Generate example</button>
+    </div>
+    <div>
+      <span id="strength-label" class="strength weak">No password checked yet.</span>
+      <ul id="advice-list"></ul>
+    </div>
+    <div id="qr">
+      <h3>📱 Share this tool</h3>
+      <canvas id="qrCanvas"></canvas>
     </div>
   </div>
 
-  <script>
-    // Password rules (mirrors Python logic)
-    const specialChars = "!@#$%^&*()_+=[]{};:\\"<.>/?\\/'".split('');
-    const commonPasswords = ["password","123456","qwerty","letmein"];
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+function checkPassword() {
+  const password = document.getElementById('password').value;
+  const strengthLabel = document.getElementById('strength-label');
+  const adviceList = document.getElementById('advice-list');
+  adviceList.innerHTML = '';
 
-    function analyzePassword(pw){
-      const issues = [];
-      let score = 0;
+  const specialChars = "!@#$%^&*()_+=[]{};:\"<.>/?\\/'";
+  const issues = [];
+  let score = 0;
 
-      // length
-      if (pw.length >= 8 && pw.length <= 64) score += 1; else issues.push('Please ensure your password is between 8 and 64 characters long.');
+  // Length rule
+  if (password.length >= 8 && password.length <= 64) score++;
+  else issues.push("Please ensure your password is between 8 and 64 characters long.");
 
-      // no spaces
-      if (!pw.includes(' ')) score += 1; else issues.push('Please remove any spaces from your password.');
+  // Spaces
+  if (password.includes(' ')) issues.push("Please remove any spaces.");
+  else score++;
 
-      // composition
-      let hasUpper=false, hasLower=false, hasDigit=false, hasSpecial=false;
-      for (let ch of pw){
-        if (ch >= 'A' && ch <= 'Z') hasUpper = true;
-        else if (ch >= 'a' && ch <= 'z') hasLower = true;
-        else if (ch >= '0' && ch <= '9') hasDigit = true;
-        else if (specialChars.includes(ch)) hasSpecial = true;
-      }
-      if (hasUpper) score += 1; else issues.push('Please include at least one uppercase letter (A–Z).');
-      if (hasLower) score += 1; else issues.push('Please include at least one lowercase letter (a–z).');
-      if (hasDigit) score += 1; else issues.push('Please include at least one number (0–9).');
-      if (hasSpecial) score += 1; else issues.push('Please include at least one special character (e.g., !@#$%^&*).');
+  // Check characters
+  let hasUpper=false, hasLower=false, hasDigit=false, hasSpecial=false;
+  for (let ch of password) {
+    if (ch >= 'A' && ch <= 'Z') hasUpper = true;
+    else if (ch >= 'a' && ch <= 'z') hasLower = true;
+    else if (ch >= '0' && ch <= '9') hasDigit = true;
+    else if (specialChars.includes(ch)) hasSpecial = true;
+  }
 
-      // all alpha or all digit
-      const allAlpha = pw.length>0 && [...pw].every(ch => (ch>='A'&&ch<='Z') || (ch>='a'&&ch<='z'));
-      const allDigit = pw.length>0 && [...pw].every(ch => (ch>='0'&&ch<='9'));
-      if (allAlpha) issues.push('Avoid using only letters — mix in numbers and symbols.');
-      if (allDigit) issues.push('Avoid using only numbers — mix in letters and symbols.');
-      if (!allAlpha && !allDigit) score += 1;
+  if (!hasUpper) issues.push("Please include at least one uppercase letter.");
+  else score++;
+  if (!hasLower) issues.push("Please include at least one lowercase letter.");
+  else score++;
+  if (!hasDigit) issues.push("Please include at least one digit.");
+  else score++;
+  if (!hasSpecial) issues.push("Please include at least one special character.");
+  else score++;
 
-      // 3 identical consecutive
-      let hasRepeats=false; let count=1;
-      for (let i=1;i<pw.length;i++){
-        if (pw[i]===pw[i-1]){ count++; if (count>=3){ hasRepeats=true; break; }} else { count=1; }
-      }
-      if (hasRepeats) issues.push('Avoid repeating the same character 3 or more times in a row.'); else score += 1;
+  // Entirely alpha or numeric
+  const allAlpha = /^[A-Za-z]+$/.test(password);
+  const allNum = /^[0-9]+$/.test(password);
+  if (allAlpha) issues.push("Avoid using only letters — mix numbers and symbols.");
+  if (allNum) issues.push("Avoid using only numbers — mix letters and symbols.");
+  if (!allAlpha && !allNum) score++;
 
-      // common passwords
-      if (commonPasswords.includes(pw.toLowerCase())) issues.push('This password is too common and easy to guess — please choose something unique.'); else score += 1;
+  // Repeats
+  if (/(.)\1\1/.test(password)) issues.push("Avoid repeating a character 3+ times.");
+  else score++;
 
-      // strength
-      let strength;
-      if (issues.length === 0) { strength = 'Strong'; }
-      else { strength = (score <=3) ? 'Weak' : 'Moderate'; }
+  // Common
+  const common = ["password", "123456", "qwerty", "letmein"];
+  if (common.includes(password.toLowerCase())) issues.push("This password is too common — pick something unique.");
+  else score++;
 
-      return {valid: issues.length===0, strength, issues, score};
+  // Final results
+  if (issues.length === 0) {
+    strengthLabel.textContent = "Strong 💪 Well done!";
+    strengthLabel.className = "strength strong";
+    adviceList.innerHTML = "<li>Excellent! 🎉 Your password meets all security requirements.</li><li>Keep it unique and private!</li>";
+  } else {
+    if (score <= 3) {
+      strengthLabel.textContent = "Weak ⚠️ Please improve.";
+      strengthLabel.className = "strength weak";
+    } else {
+      strengthLabel.textContent = "Moderate 🔹 Can be stronger.";
+      strengthLabel.className = "strength moderate";
     }
-
-    // UI helpers
-    const pwdEl = document.getElementById('password');
-    const checkBtn = document.getElementById('checkBtn');
-    const messagesEl = document.getElementById('messages');
-    const strengthBadge = document.getElementById('strengthBadge');
-    const strengthText = document.getElementById('strengthText');
-    const showBox = document.getElementById('showBox');
-    const generateBtn = document.getElementById('generateBtn');
-
-    function renderResult(res){
-      // badge
-      strengthBadge.className = 'badge';
-      if (res.strength==='Weak') { strengthBadge.classList.add('strength-weak'); }
-      else if (res.strength==='Moderate') { strengthBadge.classList.add('strength-moderate'); }
-      else { strengthBadge.classList.add('strength-strong'); }
-      strengthBadge.textContent = res.strength;
-
-      strengthText.textContent = res.valid ? 'Password meets all requirements.' : 'Improve the password using the suggestions below.';
-
-      messagesEl.innerHTML = '';
-      if (res.valid){
-        const msgWrap = document.createElement('div'); msgWrap.className = 'success';
-        msgWrap.innerHTML = '<strong>Excellent! 🎉</strong> Your password meets all security requirements. Well done!';
-        messagesEl.appendChild(msgWrap);
-
-        const bullets = document.createElement('ul');
-        const items = ['Includes uppercase, lowercase, digits, and special characters.','Meets length and uniqueness requirements.','No repeated characters and not a common password.'];
-        items.forEach(it=>{ const li=document.createElement('li'); li.textContent=it; bullets.appendChild(li); });
-        messagesEl.appendChild(bullets);
-      } else {
-        res.issues.forEach(it=>{
-          const div = document.createElement('div'); div.className='issue'; div.textContent = it; messagesEl.appendChild(div);
-        });
-      }
-    }
-
-    checkBtn.addEventListener('click', ()=>{
-      const pw = pwdEl.value;
-      const res = analyzePassword(pw);
-      renderResult(res);
-      if (res.valid){
-        // celebratory focus
-        strengthBadge.animate([{transform:'scale(1)'},{transform:'scale(1.06)'},{transform:'scale(1)'}],{duration:450});
-      }
+    issues.forEach(msg => {
+      const li = document.createElement('li');
+      li.textContent = msg;
+      adviceList.appendChild(li);
     });
+  }
+}
 
-    pwdEl.addEventListener('keydown', function(e){ if (e.key === 'Enter') checkBtn.click(); });
+// Show password
+document.getElementById('showPassword').addEventListener('change', function() {
+  const pwd = document.getElementById('password');
+  pwd.type = this.checked ? 'text' : 'password';
+});
 
-    showBox.addEventListener('change', ()=>{
-      pwdEl.type = showBox.checked ? 'text' : 'password';
-    });
+// Generate example
+function generateExample() {
+  const examples = [
+    "Gr@ce2025!",
+    "SecuR3#Life",
+    "M@thM0del!ng",
+    "Cyb3r$afe2025",
+    "Str0ng#Mindset"
+  ];
+  document.getElementById('password').value = examples[Math.floor(Math.random() * examples.length)];
+}
 
-    generateBtn.addEventListener('click', ()=>{
-      // a simple example generator that meets rules
-      const example = 'G!7r8eN4x'; // short, valid
-      pwdEl.value = example; checkBtn.click();
-    });
+// Generate QR code for your GitHub page
+function generateQR() {
+  const qrCanvas = document.getElementById('qrCanvas');
+  const pageURL = window.location.href; // current URL
+  new QRCode(qrCanvas, {
+    text: pageURL,
+    width: 120,
+    height: 120,
+    colorDark: "#06b6d4",
+    colorLight: "#0f172a",
+    correctLevel: QRCode.CorrectLevel.H
+  });
+}
 
-    // initialize
-    renderResult({valid:false,strength:'Weak',issues:[]});
-  </script>
+window.onload = generateQR;
+</script>
 </body>
 </html>
